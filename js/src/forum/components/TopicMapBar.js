@@ -10,29 +10,49 @@ import Button from 'flarum/common/components/Button';
  * server-side); one fetch per discussion per page session.
  */
 
+/**
+ * Module-level cache holding the RESOLVED payload, not just the promise:
+ * post components can be remounted on any redraw (other extensions'
+ * footer items reshuffle), and a freshly-mounted instance must be able
+ * to render the map synchronously or it flashes (or sticks on) the
+ * loading state.
+ */
 const cache = new Map();
 
-function fetchMap(discussionId) {
-  if (cache.has(discussionId)) return cache.get(discussionId);
-  const p = app
-    .request({ method: 'GET', url: app.forum.attribute('apiUrl') + '/topicmap/' + discussionId })
-    .catch(() => null);
-  cache.set(discussionId, p);
-  return p;
+function mapEntry(discussionId) {
+  let entry = cache.get(discussionId);
+  if (!entry) {
+    entry = { done: false, data: null };
+    entry.promise = app
+      .request({ method: 'GET', url: app.forum.attribute('apiUrl') + '/topicmap/' + discussionId })
+      .catch(() => null)
+      .then((d) => {
+        entry.done = true;
+        entry.data = d && d.ok ? d : null;
+        m.redraw();
+        return entry.data;
+      });
+    cache.set(discussionId, entry);
+  }
+  return entry;
 }
 
 export default class TopicMapBar extends Component {
   oninit(vnode) {
     super.oninit(vnode);
-    this.data = null;
-    this.loading = true;
     this.panel = null;
+  }
 
-    fetchMap(this.attrs.discussion.id()).then((d) => {
-      this.data = d && d.ok ? d : null;
-      this.loading = false;
-      m.redraw();
-    });
+  get entry() {
+    return mapEntry(this.attrs.discussion.id());
+  }
+
+  get loading() {
+    return !this.entry.done;
+  }
+
+  get data() {
+    return this.entry.data;
   }
 
   t(key, params) {
