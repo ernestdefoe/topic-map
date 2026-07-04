@@ -1,0 +1,40 @@
+{
+    "name": "ernestdefoe/topic-map",
+    "description": "Discourse-style topic map for Flarum 2 — views, likes, links, top participants and read time under the first post, plus a Top Replies panel.",
+    "keywords": ["flarum", "flarum-extension", "topic-map", "summary", "views"],
+    "type": "flarum-extension",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ernest Defoe",
+            "email": "ernestdefoe@gmail.com"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/ernestdefoe/topic-map/issues",
+        "source": "https://github.com/ernestdefoe/topic-map"
+    },
+    "require": {
+        "php": "^8.2",
+        "flarum/core": "^2.0"
+    },
+    "suggest": {
+        "flarum/likes": "Enables the likes stat and the Top Replies panel (^2.0)."
+    },
+    "autoload": {
+        "psr-4": {
+            "Ernestdefoe\\TopicMap\\": "src/"
+        }
+    },
+    "extra": {
+        "flarum-extension": {
+            "title": "Topic Map",
+            "category": "feature",
+            "icon": {
+                "name": "fas fa-map",
+                "backgroundColor": "#4f46e5",
+                "color": "#fff"
+            }
+        }
+    }
+}
