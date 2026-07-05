@@ -80,7 +80,7 @@ export default class TopicMapBar extends Component {
       stats.push(this.stat('views', fmt(d.views), this.t('views')));
     }
     if (d.likes !== null && d.likes !== undefined) {
-      stats.push(this.stat('likes', fmt(d.likes), this.t('likes')));
+      stats.push(this.stat('likes', fmt(d.likes), this.t(d.likesSource === 'reactions' ? 'reactions' : 'likes')));
     }
     if (d.linkCount > 0) {
       stats.push(this.stat('links', fmt(d.linkCount), this.t('links'), () => this.toggle('links')));

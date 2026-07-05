@@ -73,14 +73,17 @@ class TopicMap
             ];
         }
 
+        $source = $this->engagementSource();
+
         $map = [
             'ok' => true,
-            'likes' => $this->likes((int) $discussion->id),
+            'likes' => $source ? $this->likes((int) $discussion->id, $source['table']) : null,
+            'likesSource' => $source['label'] ?? null,
             'linkCount' => count($links),
             'links' => $linkRows,
             'users' => $this->participants($discussion, $posts),
             'readMinutes' => max(1, (int) ceil($words / 200)),
-            'topReplies' => $this->topReplies((int) $discussion->id),
+            'topReplies' => $source ? $this->topReplies((int) $discussion->id, $source['table']) : [],
             'truncated' => $posts->count() >= self::SCAN_LIMIT,
         ];
 
@@ -105,14 +108,30 @@ class TopicMap
         return null;
     }
 
-    protected function likes(int $discussionId): ?int
+    /**
+     * Whichever engagement extension the forum runs: flarum/likes wins
+     * when both exist, fof/reactions otherwise. Both tables share the
+     * post_id shape this class needs.
+     *
+     * @return array{table: string, label: string}|null
+     */
+    protected function engagementSource(): ?array
     {
-        if (! $this->db->getSchemaBuilder()->hasTable('post_likes')) {
-            return null;
+        $schema = $this->db->getSchemaBuilder();
+        if ($schema->hasTable('post_likes')) {
+            return ['table' => 'post_likes', 'label' => 'likes'];
+        }
+        if ($schema->hasTable('post_reactions')) {
+            return ['table' => 'post_reactions', 'label' => 'reactions'];
         }
 
-        return (int) $this->db->table('post_likes')
-            ->join('posts', 'posts.id', '=', 'post_likes.post_id')
+        return null;
+    }
+
+    protected function likes(int $discussionId, string $table): int
+    {
+        return (int) $this->db->table($table)
+            ->join('posts', 'posts.id', '=', $table.'.post_id')
             ->where('posts.discussion_id', $discussionId)
             ->count();
     }
@@ -128,8 +147,10 @@ class TopicMap
         arsort($byUser);
         $topIds = array_slice(array_keys($byUser), 0, 5);
 
+        // Eloquent models, not a raw table read: the avatar_url COLUMN holds
+        // a bare filename; only the model accessor builds the public URL.
         $users = $topIds
-            ? $this->db->table('users')->whereIn('id', $topIds)->get(['id', 'username', 'avatar_url'])->keyBy('id')
+            ? \Flarum\User\User::query()->whereIn('id', $topIds)->get()->keyBy('id')
             : collect();
 
         $top = [];
@@ -140,7 +161,7 @@ class TopicMap
             }
             $top[] = [
                 'username' => (string) $u->username,
-                'avatarUrl' => $u->avatar_url ? (string) $u->avatar_url : null,
+                'avatarUrl' => $u->avatar_url ?: null,
                 'posts' => $byUser[$id],
             ];
         }
@@ -151,27 +172,27 @@ class TopicMap
         ];
     }
 
-    protected function topReplies(int $discussionId): array
+    protected function topReplies(int $discussionId, string $table): array
     {
-        if (! $this->db->getSchemaBuilder()->hasTable('post_likes')) {
-            return [];
-        }
-
         $count = max(1, min(10, (int) $this->settings->get('topic-map.top_replies_count', 5)));
 
         $rows = $this->db->table('posts')
-            ->join('post_likes', 'post_likes.post_id', '=', 'posts.id')
-            ->leftJoin('users', 'users.id', '=', 'posts.user_id')
+            ->join($table, $table.'.post_id', '=', 'posts.id')
             ->where('posts.discussion_id', $discussionId)
             ->where('posts.number', '>', 1)
             ->where('posts.type', 'comment')
             ->whereNull('posts.hidden_at')
-            ->groupBy('posts.id', 'posts.number', 'posts.content', 'users.username', 'users.avatar_url')
-            ->orderByRaw('COUNT(post_likes.post_id) DESC')
+            ->groupBy('posts.id', 'posts.number', 'posts.content', 'posts.user_id')
+            ->orderByRaw('COUNT('.$table.'.post_id) DESC')
             ->orderBy('posts.number')
             ->limit($count)
-            ->selectRaw('posts.id, posts.number, posts.content, users.username, users.avatar_url, COUNT(post_likes.post_id) as likes')
+            ->selectRaw('posts.id, posts.number, posts.content, posts.user_id, COUNT('.$table.'.post_id) as likes')
             ->get();
+
+        $userIds = array_values(array_filter(array_unique($rows->pluck('user_id')->all())));
+        $users = $userIds
+            ? \Flarum\User\User::query()->whereIn('id', $userIds)->get()->keyBy('id')
+            : collect();
 
         $out = [];
         foreach ($rows as $row) {
@@ -179,12 +200,13 @@ class TopicMap
             if (mb_strlen($excerpt) > 180) {
                 $excerpt = mb_substr($excerpt, 0, 180).'…';
             }
+            $u = $row->user_id ? $users->get($row->user_id) : null;
             $out[] = [
                 'number' => (int) $row->number,
                 'likes' => (int) $row->likes,
                 'excerpt' => $excerpt,
-                'username' => (string) ($row->username ?? ''),
-                'avatarUrl' => $row->avatar_url ? (string) $row->avatar_url : null,
+                'username' => (string) ($u->username ?? ''),
+                'avatarUrl' => $u ? ($u->avatar_url ?: null) : null,
             ];
         }
 

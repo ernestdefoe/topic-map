@@ -2,6 +2,7 @@ ernestdefoe-topic-map:
   forum:
     views: views
     likes: likes
+    reactions: reactions
     links: links
     users: users
     min_read: min read

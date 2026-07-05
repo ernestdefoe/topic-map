@@ -4,10 +4,12 @@
 
 A [Flarum 2](https://flarum.org) extension. A Discourse-style **topic map** under the first post of busy discussions: views, likes, outbound links, top participants and estimated read time at a glance — plus a **Top Replies** panel that jumps you straight to the most-liked answers.
 
+![Topic map with the Top Replies panel open](.github/topic-map.png)
+
 ## Features
 
 - **Stats bar** on the first post once a discussion passes a reply threshold (admin setting): views · likes · links · participants (with avatars) · minutes-to-read.
-- **Top Replies** — the most-liked replies with author + excerpt; click one to jump to that post. Needs `flarum/likes`; hides without it.
+- **Top Replies** — the most-liked replies with author + excerpt; click one to jump to that post. Works with `flarum/likes` **or** `fof/reactions` (the stat relabels itself "reactions"); hides when neither is installed.
 - **Links panel** — the discussion's outbound links grouped by URL, tap the links stat to expand.
 - **View counting** built in (guests count, one per browser session, visibility-checked). On forums running `ernestdefoe/bespoke`, Bespoke's view counter is used instead — one source of truth, never double-counted.
 - Everything is computed server-side and cached; a 400-post scan cap keeps huge topics cheap.
