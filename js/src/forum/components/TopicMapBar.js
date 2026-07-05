@@ -19,10 +19,10 @@ import Button from 'flarum/common/components/Button';
  */
 const cache = new Map();
 
-function mapEntry(discussionId) {
+export function mapEntry(discussionId) {
   let entry = cache.get(discussionId);
   if (!entry) {
-    entry = { done: false, data: null };
+    entry = { done: false, data: null, panel: null };
     entry.promise = app
       .request({ method: 'GET', url: app.forum.attribute('apiUrl') + '/topicmap/' + discussionId })
       .catch(() => null)
@@ -37,12 +37,18 @@ function mapEntry(discussionId) {
   return entry;
 }
 
-export default class TopicMapBar extends Component {
-  oninit(vnode) {
-    super.oninit(vnode);
-    this.panel = null;
-  }
+/**
+ * Post components guard their subtree with a SubtreeRetainer — nothing
+ * inside re-renders unless a tracked value changes. This is the value the
+ * host CommentPost tracks for us: it flips when the payload arrives and
+ * whenever a panel opens/closes.
+ */
+export function mapStateKey(discussionId) {
+  const entry = cache.get(discussionId);
+  return entry ? entry.done + ':' + (entry.panel || '') : 'idle';
+}
 
+export default class TopicMapBar extends Component {
   get entry() {
     return mapEntry(this.attrs.discussion.id());
   }
@@ -53,6 +59,10 @@ export default class TopicMapBar extends Component {
 
   get data() {
     return this.entry.data;
+  }
+
+  get panel() {
+    return this.entry.panel;
   }
 
   t(key, params) {
@@ -111,7 +121,7 @@ export default class TopicMapBar extends Component {
   }
 
   toggle(panel) {
-    this.panel = this.panel === panel ? null : panel;
+    this.entry.panel = this.entry.panel === panel ? null : panel;
     m.redraw();
   }
 

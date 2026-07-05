@@ -2,7 +2,7 @@ import app from 'flarum/forum/app';
 import { extend } from 'flarum/common/extend';
 import CommentPost from 'flarum/forum/components/CommentPost';
 import DiscussionPage from 'flarum/forum/components/DiscussionPage';
-import TopicMapBar from './forum/components/TopicMapBar';
+import TopicMapBar, { mapStateKey } from './forum/components/TopicMapBar';
 
 app.initializers.add('ernestdefoe-topic-map', () => {
   // The map lives in the FIRST post's footer, once the discussion has
@@ -16,6 +16,15 @@ app.initializers.add('ernestdefoe-topic-map', () => {
 
     const threshold = Number(app.forum.attribute('topicMapMinReplies')) || 2;
     if ((discussion.replyCount() || 0) < threshold) return;
+
+    // Post components hold a SubtreeRetainer; without a check for our
+    // state the subtree never rebuilds and the map sticks on its loading
+    // spinner. Register once per component instance.
+    if (this.subtree && !this._topicMapTracked) {
+      this._topicMapTracked = true;
+      const id = discussion.id();
+      this.subtree.check(() => mapStateKey(id));
+    }
 
     items.add('topicMap', m(TopicMapBar, { discussion }), -100);
   });
