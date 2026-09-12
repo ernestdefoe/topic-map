@@ -176,6 +176,24 @@ class TopicMap
     {
         $count = max(1, min(10, (int) $this->settings->get('topic-map.top_replies_count', 5)));
 
+        /*
+         * 🚨 Raw SQL is handed to the database VERBATIM — the query builder
+         * cannot prefix what it cannot parse.
+         *
+         * `table()`, `join()`, `where()`, `groupBy()` and `select()` all put
+         * the forum's table prefix on names they are given, including the
+         * table half of a qualified column like `posts.id`. `selectRaw()` and
+         * `orderByRaw()` do not, and on a forum with a prefix this query asked
+         * `dev_posts` for a column called `posts.id`:
+         *
+         *   SQLSTATE[42S22]: Unknown column 'posts.id' in 'SELECT'
+         *
+         * The whole topic map 500s, so the panel is not degraded, it is gone.
+         * Only the aggregate genuinely needs raw SQL, and it gets the prefixed
+         * name explicitly.
+         */
+        $counted = $this->db->getTablePrefix().$table.'.post_id';
+
         $rows = $this->db->table('posts')
             ->join($table, $table.'.post_id', '=', 'posts.id')
             ->where('posts.discussion_id', $discussionId)
@@ -183,10 +201,11 @@ class TopicMap
             ->where('posts.type', 'comment')
             ->whereNull('posts.hidden_at')
             ->groupBy('posts.id', 'posts.number', 'posts.content', 'posts.user_id')
-            ->orderByRaw('COUNT('.$table.'.post_id) DESC')
+            ->orderByRaw('COUNT('.$counted.') DESC')
             ->orderBy('posts.number')
             ->limit($count)
-            ->selectRaw('posts.id, posts.number, posts.content, posts.user_id, COUNT('.$table.'.post_id) as likes')
+            ->select('posts.id', 'posts.number', 'posts.content', 'posts.user_id')
+            ->selectRaw('COUNT('.$counted.') as likes')
             ->get();
 
         $userIds = array_values(array_filter(array_unique($rows->pluck('user_id')->all())));
