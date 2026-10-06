@@ -35,3 +35,4 @@ php flarum cache:clear
 
 - [Packagist](https://packagist.org/packages/ernestdefoe/topic-map)
 - [GitHub](https://github.com/ernestdefoe/topic-map)
+- [Discuss on discuss.flarum.org](https://discuss.flarum.org/d/39520-topic-map)
