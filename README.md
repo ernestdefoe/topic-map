@@ -35,4 +35,9 @@ php flarum cache:clear
 
 - [Packagist](https://packagist.org/packages/ernestdefoe/topic-map)
 - [GitHub](https://github.com/ernestdefoe/topic-map)
-- [Discuss on discuss.flarum.org](https://discuss.flarum.org/d/39520-topic-map)
+
+## Support
+
+- **Support forum:** [Topic Map on ernestdefoe.online](https://ernestdefoe.online/d/73)
+- **Flarum community:** [Topic Map on discuss.flarum.org](https://discuss.flarum.org/d/39520-topic-map)
+- **Bug reports:** [GitHub issues](https://github.com/ernestdefoe/topic-map/issues)
