@@ -41,10 +41,14 @@ class TopicMap
             return $cached;
         }
 
+        // 🚨 Not private either: the map is cached for everyone, and a private
+        // post — flarum/approval marks every post awaiting approval as one —
+        // is not everyone's to read. Its links and excerpt were shown to all.
         $posts = $this->db->table('posts')
             ->where('discussion_id', $discussion->id)
             ->where('type', 'comment')
             ->whereNull('hidden_at')
+            ->where('is_private', false)
             ->orderBy('number')
             ->limit(self::SCAN_LIMIT)
             ->get(['id', 'number', 'user_id', 'content']);
@@ -134,6 +138,9 @@ class TopicMap
         return (int) $this->db->table($table)
             ->join('posts', 'posts.id', '=', $table.'.post_id')
             ->where('posts.discussion_id', $discussionId)
+            ->where('posts.type', 'comment')
+            ->whereNull('posts.hidden_at')
+            ->where('posts.is_private', false)
             ->count();
     }
 
@@ -202,6 +209,7 @@ class TopicMap
             ->where('posts.number', '>', 1)
             ->where('posts.type', 'comment')
             ->whereNull('posts.hidden_at')
+            ->where('posts.is_private', false)
             ->groupBy('posts.id', 'posts.number', 'posts.content', 'posts.user_id')
             ->orderByRaw('COUNT('.$counted.') DESC')
             ->orderBy('posts.number')
