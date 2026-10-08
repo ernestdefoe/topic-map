@@ -100,7 +100,6 @@ class TopicMap
     }
 
     /** ---- pieces --------------------------------------------------- */
-
     protected function views(int $discussionId): ?int
     {
         $schema = $this->db->getSchemaBuilder();
