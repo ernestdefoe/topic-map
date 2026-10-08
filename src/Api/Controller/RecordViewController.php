@@ -35,16 +35,22 @@ class RecordViewController implements RequestHandlerInterface
             return new EmptyResponse(204);
         }
 
-        try {
-            $this->db->table('topicmap_discussion_views')->insert([
-                'discussion_id' => $id,
-                'count' => 1,
-            ]);
-        } catch (QueryException $e) {
-            if ((string) $e->getCode() !== '23000') {
-                throw $e;
+        $views = fn () => $this->db->table('topicmap_discussion_views')->where('discussion_id', $id);
+
+        // Counted first, inserted only for a discussion's first view. The
+        // other way round, every view after the first was a failed INSERT,
+        // and PostgreSQL reports that as SQLSTATE 23505, not MySQL's 23000,
+        // so it was rethrown as a 500.
+        if ($views()->increment('count') === 0) {
+            try {
+                $this->db->table('topicmap_discussion_views')->insert(['discussion_id' => $id, 'count' => 1]);
+            } catch (QueryException $e) {
+                // Two first views at once: the other one inserted the row.
+                if (! str_starts_with((string) $e->getCode(), '23')) {
+                    throw $e;
+                }
+                $views()->increment('count');
             }
-            $this->db->table('topicmap_discussion_views')->where('discussion_id', $id)->increment('count');
         }
 
         return new EmptyResponse(204);
