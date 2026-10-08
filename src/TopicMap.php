@@ -6,6 +6,7 @@ use Flarum\Discussion\Discussion;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Contracts\Cache\Store;
 use Illuminate\Database\ConnectionInterface;
+use Illuminate\Support\Collection;
 
 /**
  * Builds the topic-map payload for one discussion: view count, total
@@ -136,7 +137,8 @@ class TopicMap
             ->count();
     }
 
-    protected function participants(Discussion $discussion, $posts): array
+    /** @param Collection<int, \stdClass> $posts */
+    protected function participants(Discussion $discussion, Collection $posts): array
     {
         $byUser = [];
         foreach ($posts as $post) {

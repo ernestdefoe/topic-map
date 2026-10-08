@@ -21,5 +21,5 @@ return [
     (new Extend\Settings())
         ->default('topic-map.min_replies', 2)
         ->default('topic-map.top_replies_count', 5)
-        ->serializeToForum('topicMapMinReplies', 'topic-map.min_replies', 'intval', 2),
+        ->serializeToForum('topicMapMinReplies', 'topic-map.min_replies', 'intval'),
 ];
