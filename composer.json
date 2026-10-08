@@ -1,7 +1,13 @@
 {
     "name": "ernestdefoe/topic-map",
     "description": "Discourse-style topic map for Flarum 2 — views, likes, links, top participants and read time under the first post, plus a Top Replies panel.",
-    "keywords": ["flarum", "flarum-extension", "topic-map", "summary", "views"],
+    "keywords": [
+        "flarum",
+        "flarum-extension",
+        "topic-map",
+        "summary",
+        "views"
+    ],
     "type": "flarum-extension",
     "license": "MIT",
     "authors": [
@@ -28,6 +34,11 @@
             "Ernestdefoe\\TopicMap\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Ernestdefoe\\TopicMap\\Tests\\": "tests/"
+        }
+    },
     "extra": {
         "flarum-extension": {
             "title": "Topic Map",
@@ -38,5 +49,26 @@
                 "color": "#fff"
             }
         }
-    }
+    },
+    "require-dev": {
+        "flarum/phpstan": "^2.0",
+        "flarum/testing": "^2.0",
+        "flarum/likes": "^2.0"
+    },
+    "scripts": {
+        "test": [
+            "@test:integration"
+        ],
+        "test:integration": "phpunit -c tests/phpunit.integration.xml",
+        "test:setup": "@php tests/integration/setup.php",
+        "analyse:phpstan": "phpstan analyse"
+    },
+    "scripts-descriptions": {
+        "test": "Runs all tests.",
+        "test:integration": "Runs all integration tests.",
+        "test:setup": "Sets up a database for use with integration tests. Execute this only once.",
+        "analyse:phpstan": "Run static analysis"
+    },
+    "minimum-stability": "beta",
+    "prefer-stable": true
 }
