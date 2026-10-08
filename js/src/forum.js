@@ -39,10 +39,10 @@ app.initializers.add('ernestdefoe-topic-map', () => {
       try {
         if (sessionStorage.getItem(key)) return;
         sessionStorage.setItem(key, '1');
-      } catch (e) { /* storage unavailable — count anyway */ }
-      app
-        .request({ method: 'POST', url: app.forum.attribute('apiUrl') + '/topicmap/' + id[0] + '/view' })
-        .catch(() => {});
+      } catch (e) {
+        /* storage unavailable — count anyway */
+      }
+      app.request({ method: 'POST', url: app.forum.attribute('apiUrl') + '/topicmap/' + id[0] + '/view' }).catch(() => {});
     });
   }
 });

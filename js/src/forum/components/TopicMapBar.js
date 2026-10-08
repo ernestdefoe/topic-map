@@ -87,11 +87,14 @@ export default class TopicMapBar extends Component {
     }
     stats.push(
       m('.TopicMap-stat.TopicMap-users', [
-        m('.TopicMap-avatars', (d.users.top || []).map((u) =>
-          u.avatarUrl
-            ? m('img.Avatar.TopicMap-avatar', { src: u.avatarUrl, alt: u.username, title: u.username + ' · ' + u.posts, loading: 'lazy' })
-            : m('span.Avatar.TopicMap-avatar.TopicMap-avatar--letter', { title: u.username }, (u.username || '?').charAt(0).toUpperCase())
-        )),
+        m(
+          '.TopicMap-avatars',
+          (d.users.top || []).map((u) =>
+            u.avatarUrl
+              ? m('img.Avatar.TopicMap-avatar', { src: u.avatarUrl, alt: u.username, title: u.username + ' · ' + u.posts, loading: 'lazy' })
+              : m('span.Avatar.TopicMap-avatar.TopicMap-avatar--letter', { title: u.username }, (u.username || '?').charAt(0).toUpperCase())
+          )
+        ),
         m('.TopicMap-statMeta', [m('b', fmt(d.users.count)), m('span', this.t('users'))]),
       ])
     );
@@ -101,11 +104,15 @@ export default class TopicMapBar extends Component {
       m('.TopicMap-bar', [
         m('.TopicMap-stats', stats),
         (d.topReplies || []).length
-          ? m(Button, {
-              className: 'Button TopicMap-topBtn' + (this.panel === 'top' ? ' is-open' : ''),
-              icon: 'fa-solid fa-layer-group',
-              onclick: () => this.toggle('top'),
-            }, this.t('top_replies'))
+          ? m(
+              Button,
+              {
+                className: 'Button TopicMap-topBtn' + (this.panel === 'top' ? ' is-open' : ''),
+                icon: 'fa-solid fa-layer-group',
+                onclick: () => this.toggle('top'),
+              },
+              this.t('top_replies')
+            )
           : null,
       ]),
       this.panel === 'top' ? this.topRepliesPanel(d) : null,
@@ -127,30 +134,40 @@ export default class TopicMapBar extends Component {
 
   topRepliesPanel(d) {
     const discussion = this.attrs.discussion;
-    return m('.TopicMap-panel', d.topReplies.map((r) =>
-      m('button.TopicMap-reply', {
-        type: 'button',
-        onclick: () => m.route.set(app.route.discussion(discussion, r.number)),
-      }, [
-        r.avatarUrl
-          ? m('img.Avatar.TopicMap-avatar', { src: r.avatarUrl, alt: r.username, loading: 'lazy' })
-          : m('span.Avatar.TopicMap-avatar.TopicMap-avatar--letter', (r.username || '?').charAt(0).toUpperCase()),
-        m('.TopicMap-replyBody', [
-          m('.TopicMap-replyMeta', [m('b', r.username), m('span.TopicMap-replyLikes', '♥ ' + r.likes)]),
-          m('.TopicMap-replyExcerpt', r.excerpt),
-        ]),
-      ])
-    ));
+    return m(
+      '.TopicMap-panel',
+      d.topReplies.map((r) =>
+        m(
+          'button.TopicMap-reply',
+          {
+            type: 'button',
+            onclick: () => m.route.set(app.route.discussion(discussion, r.number)),
+          },
+          [
+            r.avatarUrl
+              ? m('img.Avatar.TopicMap-avatar', { src: r.avatarUrl, alt: r.username, loading: 'lazy' })
+              : m('span.Avatar.TopicMap-avatar.TopicMap-avatar--letter', (r.username || '?').charAt(0).toUpperCase()),
+            m('.TopicMap-replyBody', [
+              m('.TopicMap-replyMeta', [m('b', r.username), m('span.TopicMap-replyLikes', '♥ ' + r.likes)]),
+              m('.TopicMap-replyExcerpt', r.excerpt),
+            ]),
+          ]
+        )
+      )
+    );
   }
 
   linksPanel(d) {
-    return m('.TopicMap-panel', d.links.map((l) =>
-      m('a.TopicMap-link', { href: l.url, target: '_blank', rel: 'noopener noreferrer nofollow' }, [
-        m('span.TopicMap-linkHost', l.host),
-        m('span.TopicMap-linkUrl', l.url),
-        l.count > 1 ? m('span.TopicMap-linkCount', '×' + l.count) : null,
-      ])
-    ));
+    return m(
+      '.TopicMap-panel',
+      d.links.map((l) =>
+        m('a.TopicMap-link', { href: l.url, target: '_blank', rel: 'noopener noreferrer nofollow' }, [
+          m('span.TopicMap-linkHost', l.host),
+          m('span.TopicMap-linkUrl', l.url),
+          l.count > 1 ? m('span.TopicMap-linkCount', '×' + l.count) : null,
+        ])
+      )
+    );
   }
 }
 
