@@ -224,7 +224,7 @@ class TopicMap
 
         $out = [];
         foreach ($rows as $row) {
-            $excerpt = trim(preg_replace('/\s+/u', ' ', strip_tags(html_entity_decode((string) $row->content))));
+            $excerpt = self::plainExcerpt((string) $row->content);
             if (mb_strlen($excerpt) > 180) {
                 $excerpt = mb_substr($excerpt, 0, 180).'…';
             }
@@ -239,5 +239,21 @@ class TopicMap
         }
 
         return $out;
+    }
+
+    /**
+     * Plain text from a post's stored XML: Markdown/BBCode markers (<s>, <e>,
+     * <i>) and quoted replies dropped, mentions shown as @name. strip_tags on
+     * the raw XML left "**bold**", "[text](url)" and "@"name"#p12" behind.
+     */
+    public static function plainExcerpt(string $xml): string
+    {
+        do {
+            $xml = preg_replace('#<QUOTE>(?:(?!<QUOTE>).)*?</QUOTE>#s', ' ', $xml, -1, $n) ?? '';
+        } while ($n > 0);
+        $xml = preg_replace('#<([sei])>.*?</\1>#s', '', $xml) ?? '';
+        $xml = preg_replace('#<(POSTMENTION|USERMENTION)\b[^>]*?displayname="([^"]*)"[^>]*>.*?</\1>#s', ' @$2 ', $xml) ?? '';
+
+        return trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags(str_replace(['<br/>', '</p>'], ' ', $xml)), ENT_QUOTES | ENT_HTML5)) ?? '');
     }
 }

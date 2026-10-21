@@ -1,5 +1,21 @@
+// Core's .Post-footer is a zero-height inline-block that shares a line with
+// the floated .Post-actions; a one-line "X liked this" fits that, but the
+// map then overflowed the post (off a card's bottom edge, into the next
+// post). When the map is in it, make the footer a real block on its own row
+// under the actions, so every theme's footer column (padding, max-width)
+// lines it up with the post body.
+.Post-footer:has(> ul > .item-topicMap) {
+  display: block;
+  height: auto;
+  clear: both;
+}
+.Post-footer > ul > .item-topicMap {
+  display: block;
+  margin-bottom: 0;
+}
+
 .TopicMap {
-  margin-top: 14px;
+  margin-top: 10px;
   border-top: 1px solid var(--control-bg);
   padding-top: 12px;
   width: 100%;
@@ -61,8 +77,9 @@
 .TopicMap-replyLikes { font-size: 11.5px; color: var(--muted-color); }
 .TopicMap-replyExcerpt { font-size: 12.5px; color: var(--muted-color); margin-top: 2px; }
 
-.TopicMap-link {
-  display: flex; align-items: baseline; gap: 10px; min-width: 0;
+// Scoped under .TopicMap to beat core's `.Post-footer a` (inline-block, bold).
+.TopicMap .TopicMap-link {
+  display: flex; font-weight: normal; color: var(--text-color); align-items: baseline; gap: 10px; min-width: 0;
   padding: 6px 12px; border: 1px solid var(--control-bg); border-radius: 10px;
   background: var(--body-bg);
   &:hover { background: var(--control-bg); text-decoration: none; }
@@ -74,6 +91,12 @@
 }
 .TopicMap-linkCount { flex: none; font-size: 11px; color: var(--muted-color); }
 
-@media (max-width: 767px) {
-  .TopicMap-stats { gap: 14px; }
+// Phone: one row of stats edge to edge (three faces is plenty there), the
+// Top Replies button on its own full-width row underneath.
+@media (max-width: 767.98px) {
+  .TopicMap-bar { flex-direction: column; align-items: stretch; gap: 12px; }
+  .TopicMap-stats { flex-wrap: nowrap; justify-content: space-between; gap: 8px; }
+  .TopicMap-avatars .TopicMap-avatar:nth-child(n+4) { display: none; }
+  .TopicMap-avatars .TopicMap-avatar:nth-child(3) { margin-right: 0; }
+  .TopicMap-topBtn { justify-content: center; }
 }
