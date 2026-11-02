@@ -155,4 +155,25 @@ class TopicMapTest extends TestCase
         $this->assertCount(5, $map['users']['top']);
         $this->assertSame(['username' => 'user31', 'posts' => 4], array_intersect_key($map['users']['top'][0], ['username' => 1, 'posts' => 1]));
     }
+
+    #[Test]
+    public function a_cached_map_costs_no_schema_lookups()
+    {
+        $this->view(1);
+        $this->map(1);
+
+        $db = $this->database();
+        $db->flushQueryLog();
+        $db->enableQueryLog();
+        [$status, $map] = $this->map(1);
+        $queries = array_column($db->getQueryLog(), 'query');
+        $db->disableQueryLog();
+
+        $this->assertSame(200, $status);
+        $this->assertSame(1, $map['views']);
+        foreach ($queries as $sql) {
+            $this->assertStringNotContainsStringIgnoringCase('information_schema', $sql);
+            $this->assertStringNotContainsStringIgnoringCase('sqlite_master', $sql);
+        }
+    }
 }

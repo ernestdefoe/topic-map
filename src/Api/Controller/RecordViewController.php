@@ -18,6 +18,11 @@ use Psr\Http\Server\RequestHandlerInterface;
  * ernestdefoe/bespoke is absent (Bespoke's counter is the source of
  * truth on forums that run it); guests count, visibility-checked, one
  * hit per discussion per browser session enforced client-side.
+ *
+ * The table is this extension's own (its migration runs before the route
+ * exists), so there is no hasTable() guard, and the upsert is two
+ * builder statements rather than a model: a counter row has no events,
+ * casts or relations for Eloquent to add.
  */
 class RecordViewController implements RequestHandlerInterface
 {
@@ -31,7 +36,7 @@ class RecordViewController implements RequestHandlerInterface
         $id = (int) Arr::get($request->getQueryParams(), 'id', 0);
 
         $visible = $id > 0 && Discussion::whereVisibleTo($actor)->whereKey($id)->exists();
-        if (! $visible || ! $this->db->getSchemaBuilder()->hasTable('topicmap_discussion_views')) {
+        if (! $visible) {
             return new EmptyResponse(204);
         }
 

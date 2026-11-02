@@ -3,6 +3,7 @@
 namespace Ernestdefoe\TopicMap;
 
 use Flarum\Discussion\Discussion;
+use Flarum\Extension\ExtensionManager;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Contracts\Cache\Store;
 use Illuminate\Database\ConnectionInterface;
@@ -14,10 +15,16 @@ use Illuminate\Support\Collection;
  * most-liked replies. Cached five minutes, keyed by the discussion's
  * comment count so new replies naturally invalidate it.
  *
- * Soft integrations, all table-presence gated:
- *  - views come from ernestdefoe/bespoke's counter when it's installed
- *    (single source of truth), else from this extension's own table;
- *  - likes + top replies need flarum/likes and drop out without it.
+ * Soft integrations:
+ *  - views come from ernestdefoe/bespoke's counter when it's enabled
+ *    (single source of truth), else from this extension's own table —
+ *    the same test the frontend makes before it posts a view;
+ *  - likes + top replies need flarum/likes or fof/reactions (table
+ *    presence, checked only when the map is rebuilt) and drop out without.
+ *
+ * Reads go through the query builder on purpose: they are aggregates and
+ * joins over core/other extensions' tables, and the builder prefixes every
+ * table name, which raw SQL would not.
  */
 class TopicMap
 {
@@ -27,6 +34,7 @@ class TopicMap
     public function __construct(
         protected SettingsRepositoryInterface $settings,
         protected ConnectionInterface $db,
+        protected ExtensionManager $extensions,
         protected ?Store $cache = null,
     ) {
     }
@@ -100,16 +108,16 @@ class TopicMap
     }
 
     /** ---- pieces --------------------------------------------------- */
-    protected function views(int $discussionId): ?int
+    /**
+     * Read on every request, cached map or not, so no schema lookups here:
+     * our own table always exists while this extension is enabled (its
+     * migration made it), and Bespoke's exists while Bespoke is enabled.
+     */
+    protected function views(int $discussionId): int
     {
-        $schema = $this->db->getSchemaBuilder();
-        foreach (['bespoke_discussion_views', 'topicmap_discussion_views'] as $table) {
-            if ($schema->hasTable($table)) {
-                return (int) ($this->db->table($table)->where('discussion_id', $discussionId)->value('count') ?? 0);
-            }
-        }
+        $table = $this->extensions->isEnabled('ernestdefoe-bespoke') ? 'bespoke_discussion_views' : 'topicmap_discussion_views';
 
-        return null;
+        return (int) ($this->db->table($table)->where('discussion_id', $discussionId)->value('count') ?? 0);
     }
 
     /**
